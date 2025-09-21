@@ -14,7 +14,7 @@ import topology.{build_full, build_line}
 // Main
 // --------------------
 pub fn main() {
-  let num_nodes = 5
+  let num_nodes = 1000
   let algorithm = Gossip
 
   let self = process.new_subject()
@@ -35,7 +35,7 @@ pub fn main() {
     PushSum -> create_pushsum_actors(num_nodes, coord_pid)
   }
 
-  let topology = build_line(num_nodes)
+  let topology = build_full(num_nodes)
   wire_topology(actors, topology)
 
   // Kick off algorithm

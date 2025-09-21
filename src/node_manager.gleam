@@ -36,6 +36,7 @@ pub type State {
     heard: Int,
     neighbors: List(process.Subject(Message)),
     coord: process.Subject(CoordMsg),
+    terminated: Bool,
   )
 }
 
@@ -43,7 +44,7 @@ pub type State {
 // Gossip init
 // --------------------
 pub fn init(id: Int, coord: process.Subject(CoordMsg)) -> State {
-  State(id, 0, [], coord)
+  State(id, 0, [], coord, False)
 }
 
 // --------------------
@@ -53,6 +54,13 @@ pub fn update(state: State, msg: Message) -> actor.Next(State, Message) {
   case msg {
     Rumor(rumor) -> {
       let heard2 = state.heard + 1
+
+      // Notify coordinator the very first time
+      case heard2 == 1 {
+        True -> actor.send(state.coord, Done)
+        False -> Nil
+      }
+
       io.println(
         "Node "
         <> int.to_string(state.id)
@@ -62,7 +70,7 @@ pub fn update(state: State, msg: Message) -> actor.Next(State, Message) {
         <> rumor,
       )
 
-      case heard2 < 10 {
+      case heard2 < 10_000 {
         True -> {
           case list.length(state.neighbors) {
             0 -> Nil
@@ -74,18 +82,40 @@ pub fn update(state: State, msg: Message) -> actor.Next(State, Message) {
               }
             }
           }
-          actor.continue(State(state.id, heard2, state.neighbors, state.coord))
+          actor.continue(State(
+            state.id,
+            heard2,
+            state.neighbors,
+            state.coord,
+            state.terminated,
+          ))
         }
         False -> {
+          case !state.terminated {
+            True -> actor.send(state.coord, Done)
+            // notify stop once
+            False -> Nil
+          }
           io.println("Node " <> int.to_string(state.id) <> " stopped gossiping")
-          actor.send(state.coord, Done)
-          actor.continue(State(state.id, heard2, state.neighbors, state.coord))
+          actor.continue(State(
+            state.id,
+            heard2,
+            state.neighbors,
+            state.coord,
+            True,
+          ))
         }
       }
     }
 
     SetNeighbors(new_neighbors) ->
-      actor.continue(State(state.id, state.heard, new_neighbors, state.coord))
+      actor.continue(State(
+        state.id,
+        state.heard,
+        new_neighbors,
+        state.coord,
+        state.terminated,
+      ))
 
     _ -> actor.continue(state)
   }
@@ -162,11 +192,17 @@ pub type PushSumState {
     last_ratio: Float,
     neighbors: List(process.Subject(Message)),
     coord: process.Subject(CoordMsg),
+    terminated: Bool,
+    me: process.Subject(Message),
   )
 }
 
 // Init push-sum actor
-pub fn init_pushsum(id: Int, coord: process.Subject(CoordMsg)) -> PushSumState {
+pub fn init_pushsum(
+  id: Int,
+  coord: process.Subject(CoordMsg),
+  me: process.Subject(Message),
+) -> PushSumState {
   let s0 = int.to_float(id)
   PushSumState(
     id,
@@ -179,7 +215,12 @@ pub fn init_pushsum(id: Int, coord: process.Subject(CoordMsg)) -> PushSumState {
     s0 /. 1.0,
     // initial ratio
     [],
+    // neighbors
     coord,
+    False,
+    // terminated
+    me,
+    // self reference
   )
 }
 
@@ -202,7 +243,7 @@ pub fn update_pushsum(
       }
 
       // If stable 3 times in a row → report Done
-      case stable_rounds2 >= 3 {
+      case stable_rounds2 >= 3 && !state.terminated {
         True -> {
           io.println(
             "Node "
@@ -211,7 +252,7 @@ pub fn update_pushsum(
             <> float.to_string(ratio),
           )
           actor.send(state.coord, Done)
-          // Keep participating, don’t stop — coordinator decides convergence
+
           actor.continue(PushSumState(
             state.id,
             s_new /. 2.0,
@@ -220,10 +261,14 @@ pub fn update_pushsum(
             ratio,
             state.neighbors,
             state.coord,
+            True,
+            // <- mark terminated
+            state.me,
+            // <- keep self reference
           ))
         }
         False -> {
-          // Keep gossiping half to random neighbor
+          // forward half to neighbor (if any)
           case list.length(state.neighbors) {
             0 -> Nil
             n -> {
@@ -235,6 +280,10 @@ pub fn update_pushsum(
               }
             }
           }
+
+          // self-tick to keep alive
+          actor.send(state.me, PushSum(0.0, 0.0))
+
           actor.continue(PushSumState(
             state.id,
             s_new /. 2.0,
@@ -243,6 +292,9 @@ pub fn update_pushsum(
             ratio,
             state.neighbors,
             state.coord,
+            state.terminated,
+            // don’t reset
+            state.me,
           ))
         }
       }
@@ -257,6 +309,10 @@ pub fn update_pushsum(
         state.last_ratio,
         new_neighbors,
         state.coord,
+        state.terminated,
+        // preserve termination status
+        state.me,
+        // preserve self reference
       ))
 
     _ -> actor.continue(state)
@@ -270,13 +326,20 @@ pub fn create_pushsum_actors(
   coord: process.Subject(CoordMsg),
 ) -> dict.Dict(Int, process.Subject(Message)) {
   list.range(0, num_nodes - 1)
-  |> list.fold(dict.new(), fn(acc, id) {
+  |> list.fold(dict.new(), fn(acc, node_id) {
     let builder =
-      actor.new(init_pushsum(id, coord))
+      actor.new_with_initialiser(1000, fn(me) {
+        // `me` is this actor’s Subject(Message)
+        let state = init_pushsum(node_id, coord, me)
+        actor.initialised(state)
+        |> actor.returning(me)
+        // so started.data = Subject(Message)
+        |> Ok
+      })
       |> actor.on_message(update_pushsum)
 
     case actor.start(builder) {
-      Ok(started) -> dict.insert(acc, id, started.data)
+      Ok(started) -> dict.insert(acc, node_id, started.data)
       Error(_) -> acc
     }
   })
