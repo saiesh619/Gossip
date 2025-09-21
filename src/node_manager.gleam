@@ -245,12 +245,6 @@ pub fn update_pushsum(
       // If stable 3 times in a row → report Done
       case stable_rounds2 >= 3 && !state.terminated {
         True -> {
-          io.println(
-            "Node "
-            <> int.to_string(state.id)
-            <> " stable ratio: "
-            <> float.to_string(ratio),
-          )
           actor.send(state.coord, Done)
 
           actor.continue(PushSumState(
