@@ -37,7 +37,6 @@ pub fn main() {
 
   let topology = topology.build_line(num_nodes)
   wire_topology(actors, topology)
-
   // Kick off algorithm
   case dict.get(actors, 0) {
     Ok(node0) -> {
@@ -56,7 +55,7 @@ pub fn main() {
   }
 
   // Wait for convergence
-  case process.receive(self, within: 60_000) {
+  case process.receive(self, within: 100_000) {
     Ok(coordinator.Finished(elapsed)) -> {
       io.println("Convergence in " <> int.to_string(elapsed) <> " ms")
       io.println("Simulation complete.")

@@ -55,10 +55,10 @@ pub fn update(state: State, msg: Message) -> actor.Next(State, Message) {
     Rumor(rumor) -> {
       let heard2 = state.heard + 1
 
-      // Notify coordinator the very first time
-      case heard2 == 1 {
-        True -> actor.send(state.coord, Done)
-        False -> Nil
+      // Notify coordinator the very first time this node hears rumor
+      case heard2 {
+        10 -> actor.send(state.coord, Done)
+        _ -> Nil
       }
 
       io.println(
@@ -70,42 +70,26 @@ pub fn update(state: State, msg: Message) -> actor.Next(State, Message) {
         <> rumor,
       )
 
-      case heard2 < 10_000 {
-        True -> {
-          case list.length(state.neighbors) {
-            0 -> Nil
-            n -> {
-              let idx = pick_one(n)
-              case list.drop(state.neighbors, idx) {
-                [neighbor, ..] -> actor.send(neighbor, Rumor(rumor))
-                _ -> Nil
-              }
-            }
+      // Always forward rumor to a random neighbor
+      case list.length(state.neighbors) {
+        0 -> Nil
+        n -> {
+          let idx = pick_one(n)
+          case list.drop(state.neighbors, idx) {
+            [neighbor, ..] -> actor.send(neighbor, Rumor(rumor))
+            _ -> Nil
           }
-          actor.continue(State(
-            state.id,
-            heard2,
-            state.neighbors,
-            state.coord,
-            state.terminated,
-          ))
-        }
-        False -> {
-          case !state.terminated {
-            True -> actor.send(state.coord, Done)
-            // notify stop once
-            False -> Nil
-          }
-          io.println("Node " <> int.to_string(state.id) <> " stopped gossiping")
-          actor.continue(State(
-            state.id,
-            heard2,
-            state.neighbors,
-            state.coord,
-            True,
-          ))
         }
       }
+
+      // Keep actor alive, don’t self-stop
+      actor.continue(State(
+        state.id,
+        heard2,
+        state.neighbors,
+        state.coord,
+        state.terminated,
+      ))
     }
 
     SetNeighbors(new_neighbors) ->
@@ -122,7 +106,7 @@ pub fn update(state: State, msg: Message) -> actor.Next(State, Message) {
 }
 
 // --------------------
-// Helpers: spawn + wire
+// Helpers: spawn actors
 // --------------------
 pub fn create_actors(
   num_nodes: Int,
