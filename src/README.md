@@ -1,6 +1,4 @@
-Here’s a **clean README draft** you can drop into your project:
 
----
 
 # Gossip & Push-Sum Simulation
 
@@ -22,7 +20,7 @@ Here’s a **clean README draft** you can drop into your project:
 
 ---
 
-## Largest Network Size Tested
+##  Largest Network Size Tested
 
 ### Gossip Algorithm
 
@@ -33,35 +31,16 @@ Here’s a **clean README draft** you can drop into your project:
 
 ### Push-Sum Algorithm
 
-* **Line:** 800 nodes
+* **Line:** 400-500 nodes
 * **Full:** 3200 nodes
 * **3D:** 6400 nodes
 * **Imperfect 3D:** 1600 nodes
 
 ---
 
-argest Network Size Tested
-Gossip Algorithm
 
-Line: 6400 nodes
 
-Full: 6400 nodes
-
-3D: 6400 nodes
-
-Imperfect 3D: 6400 nodes
-
-Push-Sum Algorithm
-
-Line: 800 nodes
-
-Full: 3200 nodes
-
-3D: 6400 nodes
-
-Imperfect 3D: 1600 nodes
-
-How It Is Implemented
+## How It Is Implemented
 
 Language & Framework: Implemented in Gleam using Erlang’s lightweight processes and message-passing model.
 
@@ -75,7 +54,9 @@ Non-CLI Design:
 
 The code is written as a library-style module, not dependent on command-line arguments.
 
-To run an experiment, function calls (e.g., run_gossip(line, 1000)) are made directly in the main module.
+## Run Code
+Gleam Run 
+You can edit the num_nodes, topology, algorithm in project2.gleam fule
 
 This makes it easy to script multiple runs programmatically without manual CLI input.
 
