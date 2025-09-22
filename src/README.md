@@ -1,6 +1,4 @@
-Here’s a **clean README draft** you can drop into your project:
 
----
 
 # Gossip & Push-Sum Simulation
 
