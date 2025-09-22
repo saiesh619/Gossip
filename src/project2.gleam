@@ -1,21 +1,34 @@
+import argv
 import coordinator.{type Algorithm, Gossip, PushSum}
 import gleam/dict
 import gleam/erlang/process
 import gleam/int
 import gleam/io
 import gleam/otp/actor
+import gleam/string
 import node_manager.{
   type Message, PushSum as PushSumMsg, Rumor, create_actors,
   create_pushsum_actors, wire_topology,
 }
-import topology.{build_full, build_line}
+import topology.{build_3d_grid, build_full, build_imperfect_3d_grid, build_line}
 
 // --------------------
 // Main
 // --------------------
 pub fn main() {
-  let num_nodes = 1000
+  let args = argv.load().arguments
+  io.println("Arguments: " <> string.join(args, " "))
+
+  // Number of nodes, algorithm, and topology can be adjusted here
+  let num_nodes = 800
+  // let algorithm = PushSum
+  // let algorithm = Gossip
   let algorithm = PushSum
+  // let topology = build_line
+  // let topology = build_3d_grid
+  // let topology = build_imperfect_3d_grid
+  // let topology = build_full
+  let topology = build_imperfect_3d_grid
 
   let self = process.new_subject()
 
@@ -34,8 +47,7 @@ pub fn main() {
     Gossip -> create_actors(num_nodes, coord_pid)
     PushSum -> create_pushsum_actors(num_nodes, coord_pid)
   }
-
-  let topology = topology.build_line(num_nodes)
+  let topology = topology(num_nodes)
   wire_topology(actors, topology)
   // Kick off algorithm
   case dict.get(actors, 0) {
@@ -55,7 +67,7 @@ pub fn main() {
   }
 
   // Wait for convergence
-  case process.receive(self, within: 100_000) {
+  case process.receive(self, within: 20_000) {
     Ok(coordinator.Finished(elapsed)) -> {
       io.println("Convergence in " <> int.to_string(elapsed) <> " ms")
       io.println("Simulation complete.")

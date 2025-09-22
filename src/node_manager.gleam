@@ -61,15 +61,6 @@ pub fn update(state: State, msg: Message) -> actor.Next(State, Message) {
         _ -> Nil
       }
 
-      io.println(
-        "Node "
-        <> int.to_string(state.id)
-        <> " heard rumor "
-        <> int.to_string(heard2)
-        <> ": "
-        <> rumor,
-      )
-
       // Always forward rumor to a random neighbor
       case list.length(state.neighbors) {
         0 -> Nil
@@ -144,16 +135,16 @@ pub fn wire_topology(
           neighbors
           |> list.map(int.to_string)
           |> string.join(", ")
-        io.println(
-          "Node " <> int.to_string(id) <> " neighbors: [" <> neighbor_str <> "]",
-        )
-        io.println(
-          "Node "
-          <> int.to_string(id)
-          <> " neighbors: ["
-          <> { neighbors |> list.map(int.to_string) |> string.join(", ") }
-          <> "]",
-        )
+        //  io.println(
+        //   "Node " <> int.to_string(id) <> " neighbors: [" <> neighbor_str <> "]",
+        //)
+        //  io.println(
+        //   "Node "
+        //  <> int.to_string(id)
+        // <> " neighbors: ["
+        //<> { neighbors |> list.map(int.to_string) |> string.join(", ") }
+        //<> "]",
+        // )
 
         actor.send(inbox, SetNeighbors(neighbor_subjects))
       }

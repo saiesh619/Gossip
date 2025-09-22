@@ -80,8 +80,7 @@ fn get_cube_root(n: Int) -> Int {
 fn find_cube_root_helper(n: Int, candidate: Int) -> Int {
   let cubed = candidate * candidate * candidate
   case cubed {
-    _ if cubed == n -> candidate
-    _ if cubed > n -> candidate - 1
+    _ if cubed >= n -> candidate
     _ -> find_cube_root_helper(n, candidate + 1)
   }
 }
