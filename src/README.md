@@ -38,28 +38,9 @@
 
 ---
 
-##  Largest Network Size Tested
-Gossip Algorithm
 
-Line: 6400 nodes
 
-Full: 6400 nodes
-
-3D: 6400 nodes
-
-Imperfect 3D: 6400 nodes
-
-Push-Sum Algorithm
-
-Line: 800 nodes
-
-Full: 3200 nodes
-
-3D: 6400 nodes
-
-Imperfect 3D: 1600 nodes
-
-How It Is Implemented
+## How It Is Implemented
 
 Language & Framework: Implemented in Gleam using Erlang’s lightweight processes and message-passing model.
 
