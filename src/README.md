@@ -20,7 +20,7 @@
 
 ---
 
-## Largest Network Size Tested
+##  Largest Network Size Tested
 
 ### Gossip Algorithm
 
@@ -31,7 +31,7 @@
 
 ### Push-Sum Algorithm
 
-* **Line:** 800 nodes
+* **Line:** 400-500 nodes
 * **Full:** 3200 nodes
 * **3D:** 6400 nodes
 * **Imperfect 3D:** 1600 nodes
