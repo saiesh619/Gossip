@@ -38,7 +38,7 @@
 
 ---
 
-argest Network Size Tested
+##  Largest Network Size Tested
 Gossip Algorithm
 
 Line: 6400 nodes
