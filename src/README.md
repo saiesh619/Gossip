@@ -54,7 +54,9 @@ Non-CLI Design:
 
 The code is written as a library-style module, not dependent on command-line arguments.
 
-To run an experiment, function calls (e.g., run_gossip(line, 1000)) are made directly in the main module.
+## Run Code
+Gleam Run 
+You can edit the num_nodes, topology, algorithm in project2.gleam fule
 
 This makes it easy to script multiple runs programmatically without manual CLI input.
 
